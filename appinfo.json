@@ -1,0 +1,19 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "islandgrove@gmail.com",
+    "longName": "StopWatch",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "shortName": "StopWatch",
+    "uuid": "53e8d5c2-53ca-4fcf-a72a-08385e7e1e11",
+    "versionCode": 1,
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
