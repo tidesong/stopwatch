@@ -13,18 +13,18 @@ static Window *sMainWindow;
 static TextLayer *sLapLayer;
 static TextLayer *sTimeSecLayer;
 static TextLayer *sTimeMilliSecLayer;
-static bool s_isRecording = false;
-static bool s_isNewSession = true;
-static time_t s_oldTimeInSec = 0;
-static time_t s_recordTimingInSec = 0;
-static uint16_t s_recordTimingInMilliSec = 0;
-static time_t s_startTimeInSec = 0;
-static uint16_t s_startTimeInMilliSec = 0;
-static const int s_maxLaps = MAXIMUM_NUMBER_OF_LAPS;
-static time_t *s_lapTimesInSec;
-static uint16_t *s_lapTimesInMilliSec;
-static int s_recordLapIndex = 0;
-static int s_reviewLapIndex = 0;
+static bool sIsRecording = false;
+static bool sIsNewSession = true;
+static time_t sOldTimeInSec = 0;
+static time_t sRecordTimingInSec = 0;
+static uint16_t sRecordTimingInMilliSec = 0;
+static time_t sStartTimeInSec = 0; 
+static uint16_t sStartTimeInMilliSec = 0;
+static const int sMaxLaps = MAXIMUM_NUMBER_OF_LAPS;
+static time_t *sLapTimesInSec;
+static uint16_t *sLapTimesInMilliSec;
+static int sRecordLapIndex = 0;
+static int sReviewLapIndex = 0;
 static AppTimer *s_stopWatchTimer;
 static AppTimer *s_lapDisplayTimer;
 static uint32_t s_tickInterval = TICK_INTERVAL;
@@ -84,8 +84,8 @@ void displayTime(time_t displayTimeInSec, uint16_t displayTimeInMilliSec, int la
 }
 
 void incrementRecordLapIndex() {
-  if (++s_recordLapIndex == s_maxLaps) {
-    --s_recordLapIndex;
+  if (++sRecordLapIndex == sMaxLaps) {
+    --sRecordLapIndex;
   }
   
   s_lapIndexChanged = true;
@@ -98,62 +98,62 @@ void refreshDisplay() {
 }
 
 void incrementReviewLapIndex() {
-  ++s_reviewLapIndex;
-  if (s_reviewLapIndex == s_recordLapIndex) {
-    s_reviewLapIndex = 0;
+  ++sReviewLapIndex;
+  if (sReviewLapIndex == sRecordLapIndex) {
+    sReviewLapIndex = 0;
   }
   
   refreshDisplay();
 }
 
 void decrementReviewLapIndex() {
-  --s_reviewLapIndex;
-  if (s_reviewLapIndex < 0) {
-    s_reviewLapIndex = s_recordLapIndex - 1;
+  --sReviewLapIndex;
+  if (sReviewLapIndex < 0) {
+    sReviewLapIndex = sRecordLapIndex - 1;
   }
   
   refreshDisplay();
 }
 
 void resetLapTimes() {
-  for (int i = 0; i < s_maxLaps; ++i) {
-    s_lapTimesInSec[i] = 0;
-    s_lapTimesInMilliSec[i] = 0;
+  for (int i = 0; i < sMaxLaps; ++i) {
+    sLapTimesInSec[i] = 0;
+    sLapTimesInMilliSec[i] = 0;
   }
   
-  s_recordLapIndex = 0;
-  s_reviewLapIndex = 0;
+  sRecordLapIndex = 0;
+  sReviewLapIndex = 0;
 }
 
 static void calculateTimeSinceStart() {
   time_t timeInSec;
   uint16_t timeInMilliSec;
   time_ms(&timeInSec, &timeInMilliSec);
-  if (timeInMilliSec < s_startTimeInMilliSec) {
-    s_recordTimingInMilliSec = timeInMilliSec + 1000 - s_startTimeInMilliSec;
+  if (timeInMilliSec < sStartTimeInMilliSec) {
+    sRecordTimingInMilliSec = timeInMilliSec + 1000 - sStartTimeInMilliSec;
     timeInSec -= 1;
   }
   else {
-    s_recordTimingInMilliSec = timeInMilliSec - s_startTimeInMilliSec;
+    sRecordTimingInMilliSec = timeInMilliSec - sStartTimeInMilliSec;
   }
   
   s_milliSecTimeChanged = true;
   
-  if (s_oldTimeInSec != timeInSec) {
+  if (sOldTimeInSec != timeInSec) {
     s_secTimeChanged = true;
-    s_recordTimingInSec = timeInSec - s_startTimeInSec;
-	s_oldTimeInSec = timeInSec;
+    sRecordTimingInSec = timeInSec - sStartTimeInSec;
+	sOldTimeInSec = timeInSec;
   }
 }
 
 static void setStartTime() {
-  time_ms(&s_startTimeInSec, &s_startTimeInMilliSec);
+  time_ms(&sStartTimeInSec, &sStartTimeInMilliSec);
 }
  
 static void stopWatchTimerCallback(void *data) {
-  if (s_isRecording) {
+  if (sIsRecording) {
     calculateTimeSinceStart();
-    displayTime(s_recordTimingInSec, s_recordTimingInMilliSec, s_recordLapIndex);
+    displayTime(sRecordTimingInSec, sRecordTimingInMilliSec, sRecordLapIndex);
 
     s_stopWatchTimer = app_timer_register(s_tickInterval, stopWatchTimerCallback, NULL);
   }
@@ -161,51 +161,51 @@ static void stopWatchTimerCallback(void *data) {
 
 static void thawDisplayCallback(void *data) {
   s_freezeDisplay = false;
-  displayTime(s_recordTimingInSec, s_recordTimingInMilliSec, s_recordLapIndex);
+  displayTime(sRecordTimingInSec, sRecordTimingInMilliSec, sRecordLapIndex);
 }
 
 void recordLapTime(time_t lapTimeInSec, uint16_t lapTimeInMilliSec) {
-  s_lapTimesInSec[s_recordLapIndex] = lapTimeInSec;
-  s_lapTimesInMilliSec[s_recordLapIndex] = lapTimeInMilliSec;
+  sLapTimesInSec[sRecordLapIndex] = lapTimeInSec;
+  sLapTimesInMilliSec[sRecordLapIndex] = lapTimeInMilliSec;
   incrementRecordLapIndex();
-  s_reviewLapIndex = s_recordLapIndex - 1;
+  sReviewLapIndex = sRecordLapIndex - 1;
 }
 
 void startStopWatch(bool isStart) {
-  s_isRecording = isStart;
-  if (s_isRecording) {
-  	if (s_isNewSession) {
+  sIsRecording = isStart;
+  if (sIsRecording) {
+  	if (sIsNewSession) {
   	  setStartTime();
-  	  s_isNewSession = false;
+  	  sIsNewSession = false;
   	}
 	
     refreshDisplay();
-    displayTime(s_recordTimingInSec, s_recordTimingInMilliSec, s_recordLapIndex);
+    displayTime(sRecordTimingInSec, sRecordTimingInMilliSec, sRecordLapIndex);
     s_stopWatchTimer = app_timer_register(s_tickInterval, stopWatchTimerCallback, NULL);
   }
   else {
     app_timer_cancel(s_stopWatchTimer);
-    recordLapTime(s_recordTimingInSec, s_recordTimingInMilliSec);
+    recordLapTime(sRecordTimingInSec, sRecordTimingInMilliSec);
   }
 }
 
 void upSingleClickHandler(ClickRecognizerRef recognizer, void *context) {
-  if (s_isRecording) {
+  if (sIsRecording) {
     startStopWatch(false);
   }
   else {
-    if (s_isNewSession) {
+    if (sIsNewSession) {
 
 	}
 	else {
 	  incrementReviewLapIndex();
-      displayTime(s_lapTimesInSec[s_reviewLapIndex], s_lapTimesInMilliSec[s_reviewLapIndex], s_reviewLapIndex);
+      displayTime(sLapTimesInSec[sReviewLapIndex], sLapTimesInMilliSec[sReviewLapIndex], sReviewLapIndex);
 	}
   }
 }
 
 void selectSingleClickHandler(ClickRecognizerRef recognizer, void *context) {
-  if (s_isRecording) {
+  if (sIsRecording) {
 
   }
   else {
@@ -214,39 +214,39 @@ void selectSingleClickHandler(ClickRecognizerRef recognizer, void *context) {
 }
 
 void downSingleClickHandler(ClickRecognizerRef recognizer, void *context) {
-  if (s_isRecording) {
-    recordLapTime(s_recordTimingInSec, s_recordTimingInMilliSec);
+  if (sIsRecording) {
+    recordLapTime(sRecordTimingInSec, sRecordTimingInMilliSec);
 	s_freezeDisplay = true;
 	s_lapDisplayTimer =  app_timer_register(s_lapDisplayDuration, thawDisplayCallback, NULL);
-	displayTime(s_lapTimesInSec[s_reviewLapIndex], s_lapTimesInMilliSec[s_reviewLapIndex], s_reviewLapIndex);
+	displayTime(sLapTimesInSec[sReviewLapIndex], sLapTimesInMilliSec[sReviewLapIndex], sReviewLapIndex);
   }
   else {
-    if (s_isNewSession) {
+    if (sIsNewSession) {
 	
 	}
 	else {
       decrementReviewLapIndex();
-      displayTime(s_lapTimesInSec[s_reviewLapIndex], s_lapTimesInMilliSec[s_reviewLapIndex], s_reviewLapIndex);
+      displayTime(sLapTimesInSec[sReviewLapIndex], sLapTimesInMilliSec[sReviewLapIndex], sReviewLapIndex);
 	}
   }
 }
 
 void selectMultiClickHandler(ClickRecognizerRef recognizer, void *context) {
-  if (s_isRecording) {
+  if (sIsRecording) {
 
   }
   else {
-	s_isNewSession = true;
-    s_recordTimingInSec = 0;
-	s_recordTimingInMilliSec = 0;
+  	sIsNewSession = true;
+    sRecordTimingInSec = 0;
+  	sRecordTimingInMilliSec = 0;
     resetLapTimes();
     refreshDisplay();
-    displayTime(s_recordTimingInSec, s_recordTimingInMilliSec, s_recordLapIndex);
+    displayTime(sRecordTimingInSec, sRecordTimingInMilliSec, sRecordLapIndex);
   }
 }
 
 void config_provider(Window *window) {
-  s_recordTimingInSec = 0;
+  sRecordTimingInSec = 0;
  // single click / repeat-on-hold config:
   window_single_click_subscribe(BUTTON_ID_UP, upSingleClickHandler);
   window_single_click_subscribe(BUTTON_ID_SELECT, selectSingleClickHandler);
@@ -258,8 +258,8 @@ static void init() {
   // Create main Window element and assign to pointer
   sMainWindow = window_create();
 
-  s_lapTimesInSec = malloc(s_maxLaps * sizeof(time_t));
-  s_lapTimesInMilliSec = malloc(s_maxLaps * sizeof(uint16_t));
+  sLapTimesInSec = malloc(sMaxLaps * sizeof(time_t));
+  sLapTimesInMilliSec = malloc(sMaxLaps * sizeof(uint16_t));
   resetLapTimes();
   
   // Set handlers to manage the elements inside the Window
