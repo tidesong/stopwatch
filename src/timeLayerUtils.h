@@ -3,8 +3,8 @@
   
 #include <pebble.h>
 
-void load_time_layer(Window *window_layer, TextLayer *time_layer, const char* text);
-void update_time(TextLayer *time_layer);
-void destroy_time_layer(TextLayer *time_layer);
+void loadTimeLayer(Window *windowLayer, TextLayer *timeLayer, const char* text);
+//void update_time(TextLayer *time_layer);
+void destroyTimeLayer(TextLayer *timeLayer);
 
 #endif

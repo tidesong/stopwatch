@@ -35,23 +35,23 @@ static bool sMilliSecTimeChanged = false;
 static bool sFreezeDisplay = false;
 
 //Main Window Functions
-static void main_window_load(Window *window) {
+static void mainWindowLoad(Window *window) {
   // Create time TextLayer
   sLapLayer = text_layer_create(GRect(0, 10, 144, 40));
   sTimeSecLayer = text_layer_create(GRect(0, 45, 144, 40));
   sTimeMilliSecLayer = text_layer_create(GRect(0, 80, 144, 40));
 
   // Load the time layer
-  load_time_layer(window, sLapLayer, LAP_LAYER_TEXT);
-  load_time_layer(window, sTimeSecLayer, TIME_SEC_LAYER_TEXT);
-  load_time_layer(window, sTimeMilliSecLayer, TIME_MILLI_SEC_LAYER_TEXT);
+  loadTimeLayer(window, sLapLayer, LAP_LAYER_TEXT);
+  loadTimeLayer(window, sTimeSecLayer, TIME_SEC_LAYER_TEXT);
+  loadTimeLayer(window, sTimeMilliSecLayer, TIME_MILLI_SEC_LAYER_TEXT);
 }
 
-static void main_window_unload(Window *window) {
+static void mainWindowUnload(Window *window) {
   // Destroy TextLayer
-  destroy_time_layer(sLapLayer);
-  destroy_time_layer(sTimeSecLayer);
-  destroy_time_layer(sTimeMilliSecLayer);
+  destroyTimeLayer(sLapLayer);
+  destroyTimeLayer(sTimeSecLayer);
+  destroyTimeLayer(sTimeMilliSecLayer);
 }
 
 void displayTime(time_t displayTimeInSec, uint16_t displayTimeInMilliSec, int lapIndex) {
@@ -267,8 +267,8 @@ static void init() {
   
   // Set handlers to manage the elements inside the Window
   window_set_window_handlers(sMainWindow, (WindowHandlers) {
-    .load = main_window_load,
-    .unload = main_window_unload
+    .load = mainWindowLoad,
+    .unload = mainWindowUnload
   });
 
   // Show the Window on the watch, with animated=true
