@@ -25,14 +25,14 @@ static time_t *sLapTimesInSec;
 static uint16_t *sLapTimesInMilliSec;
 static int sRecordLapIndex = 0;
 static int sReviewLapIndex = 0;
-static AppTimer *s_stopWatchTimer;
-static AppTimer *s_lapDisplayTimer;
-static uint32_t s_tickInterval = TICK_INTERVAL;
-static uint32_t s_lapDisplayDuration = LAP_DISPLAY_DURATION;
-static bool s_lapIndexChanged = false;
-static bool s_secTimeChanged = false;
-static bool s_milliSecTimeChanged = false;
-static bool s_freezeDisplay = false;
+static AppTimer *sStopWatchTimer;
+static AppTimer *sLapDisplayTimer;
+static uint32_t sTickInterval = TICK_INTERVAL;
+static uint32_t sLapDisplayDuration = LAP_DISPLAY_DURATION;
+static bool sLapIndexChanged = false;
+static bool sSecTimeChanged = false;
+static bool sMilliSecTimeChanged = false;
+static bool sFreezeDisplay = false;
 
 //Main Window Functions
 static void main_window_load(Window *window) {
@@ -55,30 +55,33 @@ static void main_window_unload(Window *window) {
 }
 
 void displayTime(time_t displayTimeInSec, uint16_t displayTimeInMilliSec, int lapIndex) {
-  if (s_freezeDisplay) {
+  if (sFreezeDisplay) {
 
   }
   else {
-    if (s_lapIndexChanged) {
+    if (sLapIndexChanged) {
       static char layerBuffer[] = LAP_LAYER_TEXT;
       snprintf(layerBuffer, sizeof("Lap 001"), "Lap %03d", (lapIndex + 1));
       text_layer_set_text(sLapLayer, layerBuffer);
-      s_lapIndexChanged = false;
+      //reset LapIndexChanged
+      sLapIndexChanged = false;
     }
     
-    if (s_secTimeChanged) {
+    if (sSecTimeChanged) {
       static char secBuffer[] = TIME_SEC_LAYER_TEXT;
       struct tm *tick_time = localtime(&displayTimeInSec);
       strftime(secBuffer, sizeof(TIME_SEC_LAYER_TEXT), "%H:%M:%S", tick_time);
       text_layer_set_text(sTimeSecLayer, secBuffer);
-  	s_secTimeChanged = false;
+      //reset SecTimeChanged
+    	sSecTimeChanged = false;
     }
     
-    if (s_milliSecTimeChanged) {
+    if (sMilliSecTimeChanged) {
       static char milliSecBuffer[] = TIME_MILLI_SEC_LAYER_TEXT;
       snprintf(milliSecBuffer, sizeof(TIME_MILLI_SEC_LAYER_TEXT), "%03d", displayTimeInMilliSec);
       text_layer_set_text(sTimeMilliSecLayer, milliSecBuffer);
-  	s_milliSecTimeChanged = false;
+      //reset MillisecTimeChanged
+    	sMilliSecTimeChanged = false;
     }
   }
 }
@@ -86,15 +89,15 @@ void displayTime(time_t displayTimeInSec, uint16_t displayTimeInMilliSec, int la
 void incrementRecordLapIndex() {
   if (++sRecordLapIndex == sMaxLaps) {
     --sRecordLapIndex;
-  }
-  
-  s_lapIndexChanged = true;
+  }  
+  //set LapIndexChanged
+  sLapIndexChanged = true;
 }
 
 void refreshDisplay() {
-  s_lapIndexChanged = true;
-  s_secTimeChanged = true;
-  s_milliSecTimeChanged = true;
+  sLapIndexChanged = true;
+  sSecTimeChanged = true;
+  sMilliSecTimeChanged = true;
 }
 
 void incrementReviewLapIndex() {
@@ -137,10 +140,10 @@ static void calculateTimeSinceStart() {
     sRecordTimingInMilliSec = timeInMilliSec - sStartTimeInMilliSec;
   }
   
-  s_milliSecTimeChanged = true;
+  sMilliSecTimeChanged = true;
   
   if (sOldTimeInSec != timeInSec) {
-    s_secTimeChanged = true;
+    sSecTimeChanged = true;
     sRecordTimingInSec = timeInSec - sStartTimeInSec;
 	sOldTimeInSec = timeInSec;
   }
@@ -155,12 +158,12 @@ static void stopWatchTimerCallback(void *data) {
     calculateTimeSinceStart();
     displayTime(sRecordTimingInSec, sRecordTimingInMilliSec, sRecordLapIndex);
 
-    s_stopWatchTimer = app_timer_register(s_tickInterval, stopWatchTimerCallback, NULL);
+    sStopWatchTimer = app_timer_register(sTickInterval, stopWatchTimerCallback, NULL);
   }
 }
 
 static void thawDisplayCallback(void *data) {
-  s_freezeDisplay = false;
+  sFreezeDisplay = false;
   displayTime(sRecordTimingInSec, sRecordTimingInMilliSec, sRecordLapIndex);
 }
 
@@ -181,10 +184,10 @@ void startStopWatch(bool isStart) {
 	
     refreshDisplay();
     displayTime(sRecordTimingInSec, sRecordTimingInMilliSec, sRecordLapIndex);
-    s_stopWatchTimer = app_timer_register(s_tickInterval, stopWatchTimerCallback, NULL);
+    sStopWatchTimer = app_timer_register(sTickInterval, stopWatchTimerCallback, NULL);
   }
   else {
-    app_timer_cancel(s_stopWatchTimer);
+    app_timer_cancel(sStopWatchTimer);
     recordLapTime(sRecordTimingInSec, sRecordTimingInMilliSec);
   }
 }
@@ -216,8 +219,8 @@ void selectSingleClickHandler(ClickRecognizerRef recognizer, void *context) {
 void downSingleClickHandler(ClickRecognizerRef recognizer, void *context) {
   if (sIsRecording) {
     recordLapTime(sRecordTimingInSec, sRecordTimingInMilliSec);
-	s_freezeDisplay = true;
-	s_lapDisplayTimer =  app_timer_register(s_lapDisplayDuration, thawDisplayCallback, NULL);
+	sFreezeDisplay = true;
+	sLapDisplayTimer =  app_timer_register(sLapDisplayDuration, thawDisplayCallback, NULL);
 	displayTime(sLapTimesInSec[sReviewLapIndex], sLapTimesInMilliSec[sReviewLapIndex], sReviewLapIndex);
   }
   else {
